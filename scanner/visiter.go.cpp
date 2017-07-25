@@ -16,6 +16,12 @@ void GOVisiter::Accept(Enumer* enumer){
 		printer.PrintLine("%1 = %2", itemList[i], i);
 	printer.Outdent();
 	printer.PrintLine(")");
+	printer.PrintLine("const( ");
+	printer.Indent();
+	for (size_t i = 0; i < itemList.size(); i++)
+		printer.PrintLine("K_%1 = \"%1\"", itemList[i]);
+	printer.Outdent();
+	printer.PrintLine(")");
 
 
 	printer.PrintLine("func ToName_%1( id int )string{", enumer->GetName());

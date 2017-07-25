@@ -7,8 +7,6 @@
 #	endif
 #pragma warning(error : 4258)
 #pragma warning(error : 4715)
-
-
 #endif // (_WIN32) || defined(_WIN64) || defined(MSVC)
 
 

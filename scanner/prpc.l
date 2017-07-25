@@ -1,17 +1,14 @@
 
 
-/* IMPORT START CONDITION */
-%x IMPORT
+/* INCLUDE START CONDITION */
+%x INCLUDE
 
 %{
-
-#include <stdio.h>
-
-/* bison value type. */
-#include <string>
 #define YYSTYPE std::string
-#include "prpc.tab.hpp"
+
+#include "config.h"
 #include "scanner.h"
+#include "prpc.tab.hpp"
 
 struct FileStackNode
 {
@@ -23,7 +20,7 @@ std::vector<FileStackNode>	FileStack;
 std::set<std::string> ImportFileSet;
 std::string CurrentFilename;
 int CurrentLineno = 0;
-
+extern void yyerror (const char *msg);
 %}
 
 /* SO we don't choke on files that use \r\n */
@@ -54,12 +51,12 @@ string			return TOKEN_STRING;
 array			return TOKEN_ARRAY;
 
 
-#import			{	
-					/* Begin 'IMPORT' start condition if we met "import" keyword */
-					BEGIN(IMPORT);
+#include		{	
+					/* Begin 'INCLUDE' start condition if we met "import" keyword */
+					BEGIN(INCLUDE);
 				}
-<IMPORT>[ \t]*		/* eat the white space */
-<IMPORT>[^ \t\n]+	{ 
+<INCLUDE>[ \t]*		/* eat the white space */
+<INCLUDE>[^ \t\n]+	{ 
 					
 					/* got the import file name */
 					std::string importFilename = strings::Trim(std::string( yytext, yyleng),"\r\n\t");
@@ -104,7 +101,7 @@ array			return TOKEN_ARRAY;
 							if( !yyin )
 							{
 								// Can not found imported file.
-								fprintf( stderr, "failed to import file \"%s\".\n", importFilename.c_str() );
+								yyerror("failed to import file");
 								exit(1);
 							}
 						}

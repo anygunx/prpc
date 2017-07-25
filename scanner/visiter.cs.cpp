@@ -42,7 +42,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 				printer.PrintLine("mask.WriteBit(!%1);", fieldList[i].GetName());
 			}
 			else{
-				printer.PrintLine("mask.WriteBit(%1!=%2);", fieldList[i].GetName(), fieldList[i].GetCPPDefault());
+				printer.PrintLine("mask.WriteBit(%1!=%2);", fieldList[i].GetName(), fieldList[i].GetCSDefault());
 			}
 		}
 		printer.PrintLine("w.Write(mask.Bytes);");
@@ -96,7 +96,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 				printer.PrintLine("}");
 			}
 			else{
-				printer.PrintLine("if(%1!=%2){", fieldList[i].GetName(), fieldList[i].GetCPPDefault());
+				printer.PrintLine("if(%1!=%2){", fieldList[i].GetName(), fieldList[i].GetCSDefault());
 				printer.Indent();
 				printer.PrintLine("w.Write(%1);", fieldList[i].GetName());
 				printer.Outdent();
@@ -127,7 +127,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 	//获得参数位
 	if (!fieldList.empty()){
 		printer.PrintLine("Mask mask = new Mask(%1);", schema->GetFieldMaskLength());
-		printer.PrintLine("if(!r.Read(out mask.Bytes)){");
+		printer.PrintLine("if(!r.Read(ref mask.Bytes)){");
 		printer.Indent();
 		printer.PrintLine("return false;");
 		printer.Outdent();
@@ -140,7 +140,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 				printer.PrintLine("if(mask.ReadBit()){");
 				printer.Indent();
 				printer.PrintLine("int size = 0;");
-				printer.PrintLine("if(!r.ReadSize(out size) || size > %1){", fieldList[i].GetMaxLength());
+				printer.PrintLine("if(!r.ReadSize(ref size) || size > %1){", fieldList[i].GetMaxLength());
 				printer.Indent();
 				printer.PrintLine("return false;");
 				printer.Outdent();
@@ -158,7 +158,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 				}
 				else if (fieldList[i].IsEnumer()){
 					printer.PrintLine("byte enumer = 0XFF;");
-					printer.PrintLine("if(!r.Read(out enumer) || enumer >= %1 ){", fieldList[i].GetType()->AsEnumer()->GetItemList().size());
+					printer.PrintLine("if(!r.Read(ref enumer) || enumer >= %1 ){", fieldList[i].GetType()->AsEnumer()->GetItemList().size());
 					printer.Indent();
 					printer.PrintLine("return false;");
 					printer.Outdent();
@@ -166,7 +166,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 					printer.PrintLine("%1[i] = enumer;", fieldList[i].GetName());
 				}
 				else {
-					printer.PrintLine("if(!r.Read(out %1[i])){", fieldList[i].GetName());
+					printer.PrintLine("if(!r.Read(ref %1[i])){", fieldList[i].GetName());
 					printer.Indent();
 					printer.PrintLine("return false;");
 					printer.Outdent();
@@ -197,7 +197,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 				printer.PrintLine("if(mask.ReadBit()){");
 				printer.Indent();
 				printer.PrintLine("byte enumer = 0XFF;");
-				printer.PrintLine("if(!r.Read(out enumer) || enumer >= %1 ){", fieldList[i].GetType()->AsEnumer()->GetItemList().size());
+				printer.PrintLine("if(!r.Read(ref enumer) || enumer >= %1 ){", fieldList[i].GetType()->AsEnumer()->GetItemList().size());
 				printer.Indent();
 				printer.PrintLine("return false;");
 				printer.Outdent();
@@ -216,7 +216,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 			else {
 				printer.PrintLine("if(mask.ReadBit()){");
 				printer.Indent();
-				printer.PrintLine("if(!r.Read(out %1)){", fieldList[i].GetName());
+				printer.PrintLine("if(!r.Read(ref %1)){", fieldList[i].GetName());
 				printer.Indent();
 				printer.PrintLine("return false;");
 				printer.Outdent();
@@ -250,7 +250,7 @@ void CSVisiter::Accept(Enumer* enumer){
 
 	const std::vector<std::string> & itemList = enumer->GetItemList();
 
-	printer.PrintLine("public const string[] NAMES = new string[]{");
+	printer.PrintLine("static string[] _NAMES = new string[]{");
 	printer.Indent();
 	for (size_t i = 0; i < itemList.size(); ++i){
 		printer.PrintLine("\"%1\"%2", itemList[i], (i + 1 != itemList.size() ? "," : ""));
@@ -266,7 +266,7 @@ void CSVisiter::Accept(Enumer* enumer){
 	printer.Indent();
 	printer.PrintLine("for(int i=0; i<NAMES.Length;++i){");
 	printer.Indent();
-	printer.PrintLine("if(NAMES[i] == name){");
+	printer.PrintLine("if(_NAMES[i] == name){");
 	printer.Indent();
 	printer.PrintLine("return i;");
 	printer.Outdent();
@@ -279,14 +279,16 @@ void CSVisiter::Accept(Enumer* enumer){
 
 	printer.PrintLine("public static string ToName(int id){");
 	printer.Indent();
-	printer.PrintLine("if(id<0||id>=NAMES.Length){");
+	printer.PrintLine("if(id<0||id>=_NAMES.Length){");
 	printer.Indent();
 	printer.PrintLine("return \"\";");
 	printer.Outdent();
 	printer.PrintLine("}");
-	printer.PrintLine("return NAMES[id];");
+	printer.PrintLine("return _NAMES[id];");
 	printer.Outdent();
 	printer.PrintLine("}");
+
+	printer.PrintLine("public static string[] NAMES{ get {return _NAMES;} }");
 
 	printer.Outdent();
 	printer.PrintLine("}");
@@ -420,7 +422,7 @@ void CSVisiter::Accept(Service* service){
 		printer.Outdent();
 		printer.PrintLine("}");
 		printer.PrintLine("ushort pid = 0XFFFF;");
-		printer.PrintLine("if(!r.Read(out pid)){");
+		printer.PrintLine("if(!r.Read(ref pid)){");
 		printer.Indent();
 		printer.PrintLine("return false;");
 		printer.Outdent();

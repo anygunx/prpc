@@ -3,18 +3,20 @@
 /* Declarations */
 
 %{
-
-#include <string>
 #define YYSTYPE std::string
+
+#include "config.h"
+#include "scanner.h"
 
 void yyerror (const char *);
 int yylex (void);
 
-#include "scanner.h"
-
 Enumer EnumerContext;
 Schema SchemaContext;
 Service ServiceContext;
+
+extern std::string CurrentFilename;
+extern int CurrentLineno;
 %}
 
 %error-verbose
@@ -335,5 +337,5 @@ int yywrap (void)
 
 void yyerror (const char *msg)
 {
-	//Scanner::inst().outputErrorFL(msg);
+	std::cerr << "YACC ERROR | FILE[" << CurrentFilename << "] LINE(" << CurrentLineno << ") | " << msg;
 }

@@ -51,6 +51,7 @@ Node* Scanner::GetNode(const std::string& name)
 }
 
 void Scanner::AddNode(Node * node){
+	//std::cout << "RPPC | LEX NODE " << node->GetName() << std::endl;
 	nodeList_.push_back(node);
 }
 

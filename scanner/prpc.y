@@ -75,6 +75,7 @@ ENUMER:
     {
     	// Check enum name.
 		if( Scanner::Ref().GetNode( $2 ) ){
+			yyerror("enumer type redef ");
 			YYERROR; 
 		};
 		
@@ -102,9 +103,11 @@ ENUMER_ITEM:
 	{
 		// Check enum item name.
 		if( Scanner::Ref().GetNode( $2 ) ){
+			yyerror("enumer type redef ");
 			YYERROR; 
 		};
 		if (!EnumerContext.AddItem($1)){
+			yyerror("enumer field redef ");
 			YYERROR;
 		}
 	}
@@ -116,7 +119,8 @@ SCHEMA:
 	TOKEN_IDENTIFIER
 	{
 		// Check struct name.
-		if( Scanner::Ref().GetNode( $2 )){ 
+		if( Scanner::Ref().GetNode( $2 )){
+			yyerror("struct type redef ");
 			YYERROR; 
 		};
 		
@@ -143,6 +147,7 @@ SUPER_SCHEMA:
 	{
 		Node* super = Scanner::Ref().GetNode($2);
 		if( !super || !super->AsSchema() || SchemaContext.GetName() == $2 ){
+			yyerror("super type not found  ");
 			YYERROR;
 		}
 		SchemaContext.SetSuper(super);
@@ -162,13 +167,16 @@ STRUCT_FIELD:
 	{
 		// Check field name.
 		if( Scanner::Ref().GetNode( $2 ) ){
+			yyerror("member name same to class name  ");
 			YYERROR;
 		}
 		if( SchemaContext.GetField( $2 ) ){
+			yyerror("member name redef ");
 			YYERROR;
 		}
 		Node *type = Scanner::Ref().GetNode( $1 );
 		if (!type){
+			yyerror("type not found  ");
 			YYERROR;
 		}
 
@@ -179,13 +187,16 @@ STRUCT_FIELD:
 	{
 		// Check field name.
 		if( Scanner::Ref().GetNode( $4 ) ){
+			yyerror("member name same to class name  ");
 			YYERROR;
 		}
 		if( SchemaContext.GetField( $4) ){
+			yyerror("member name redef ");
 			YYERROR;
 		}
 		Node *type = Scanner::Ref().GetNode( $1 );
 		if (!type){
+			yyerror("type not found  ");
 			YYERROR;
 		}
 
@@ -196,13 +207,16 @@ STRUCT_FIELD:
 	{
 		// Check field name.
 		if( Scanner::Ref().GetNode( $5 ) ){
+			yyerror("member name same to class name  ");
 			YYERROR;
 		}
 		if( SchemaContext.GetField( $5 ) ){
+			yyerror("member name redef ");
 			YYERROR;
 		}
 		Node *type = Scanner::Ref().GetNode( $1 );
 		if (!type){
+			yyerror("type not found  ");
 			YYERROR;
 		}
 
@@ -215,6 +229,7 @@ SERVICE:
 	TOKEN_IDENTIFIER
 	{
 		if( Scanner::Ref().GetNode( $2 )){ 
+			yyerror("service name redef ");
 			YYERROR; 
 		};
 		
@@ -239,6 +254,7 @@ SERVICE_METHOD:
 	TOKEN_IDENTIFIER '(' SERVICE_METHOD_PARAM_LIST ')' ';'
 	{
 		if( ServiceContext.GetSchema( $1 ) ){
+			yyerror("service function name redef ");
 			YYERROR;
 		}
 		SchemaContext.SetName($1);
@@ -259,11 +275,13 @@ SERVICE_METHOD_PARAM:
 	FIELD_TYPE TOKEN_IDENTIFIER
 	{
 		if( SchemaContext.GetField( $2 ) ){
+			yyerror("service function parameter name redef ");
 			YYERROR;
 		}
 
 		Node *type = Scanner::Ref().GetNode( $1 );
 		if (!type){
+			yyerror("service function parameter type not found ");
 			YYERROR;
 		}
 		SchemaContext.AddField(type,$2);
@@ -272,10 +290,12 @@ SERVICE_METHOD_PARAM:
 	FIELD_TYPE '[' ']' TOKEN_IDENTIFIER
 	{
 		if( SchemaContext.GetField( $4 ) ){
+			yyerror("service function parameter name redef ");
 			YYERROR;
 		}
 		Node *type = Scanner::Ref().GetNode( $1 );
 		if (!type){
+			yyerror("service function parameter type not found ");
 			YYERROR;
 		}
 
@@ -285,10 +305,12 @@ SERVICE_METHOD_PARAM:
 	FIELD_TYPE '[' TOKEN_UINTEGER_LITERAL ']' TOKEN_IDENTIFIER
 	{
 		if( SchemaContext.GetField( $5 ) ){
+			yyerror("service function parameter name redef ");
 			YYERROR;
 		}
 		Node *type = Scanner::Ref().GetNode( $1 );
 		if (!type){
+			yyerror("service function parameter type not found ");
 			YYERROR;
 		}
 

@@ -52,7 +52,7 @@ array			return TOKEN_ARRAY;
 
 
 #include		{	
-					/* Begin 'INCLUDE' start condition if we met "import" keyword */
+					/* Begin 'INCLUDE' start condition if we met "include" keyword */
 					BEGIN(INCLUDE);
 				}
 <INCLUDE>[ \t]*		/* eat the white space */
@@ -102,7 +102,7 @@ array			return TOKEN_ARRAY;
 							{
 								// Can not found imported file.
 								yyerror("failed to import file");
-								exit(1);
+								exit(2);
 							}
 						}
 						yy_switch_to_buffer( yy_create_buffer( yyin, YY_BUF_SIZE ) );

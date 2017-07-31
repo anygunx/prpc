@@ -69,7 +69,7 @@ void Scanner::AddSourcePath(const std::string& pathname){
 }
 
 CodeVisiter* Scanner::CreateCodeVisiter(const std::string &name){
-	if (name == "cpp"){
+	if (name == "cc"){
 		return new CPPVisiter(package_, outputPath_);
 	}
 	else if (name == "cs"){
@@ -146,5 +146,15 @@ int Scanner::Run(int argc, char *argv[])
 	visiter->End();
 	delete visiter;
 
+	return 0;
+}
+
+int main(int argc, char *argv[]){
+	try {
+		Scanner::Ref().Run(argc, argv);
+	}
+	catch (...) {
+		return 1;
+	}
 	return 0;
 }

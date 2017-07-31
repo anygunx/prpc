@@ -3,11 +3,11 @@ ADD_DEFINITIONS(-D__STDC_LIMIT_MACROS)
 
 FIND_PACKAGE(BISON REQUIRED)
 FIND_PACKAGE(FLEX REQUIRED)
-BISON_TARGET(PRPC_PARSER prpc.y ${CMAKE_CURRENT_BINARY_DIR}/prpc.tab.cpp)
+BISON_TARGET(PRPC_PARSER prpc.y ${CMAKE_CURRENT_BINARY_DIR}/prpc.tab.cc)
 IF(MSVC)
-	FLEX_TARGET(PRPC_SCANNER prpc.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cpp COMPILE_FLAGS "--nounistd" )
+	FLEX_TARGET(PRPC_SCANNER prpc.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cc COMPILE_FLAGS "--nounistd" )
 ELSE()
-	FLEX_TARGET(PRPC_SCANNER prpc.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cpp)
+	FLEX_TARGET(PRPC_SCANNER prpc.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cc)
 ENDIF()
 ADD_FLEX_BISON_DEPENDENCY(PRPC_SCANNER PRPC_PARSER)
 
@@ -32,15 +32,14 @@ SET(INC
 )
 	
 SET(SRC
-	scanner.cpp
-	visiter.cpp
-	enumer.cpp
-	service.cpp
-	schema.cpp
-	visiter.cpp.cpp
-	visiter.cs.cpp
-	visiter.go.cpp
-	main.cpp
+	scanner.cc
+	visiter.cc
+	enumer.cc
+	service.cc
+	schema.cc
+	visiter.cc.cc
+	visiter.cs.cc
+	visiter.go.cc
 )
 
 SOURCE_GROUP(Yacc FILES ${YACC})

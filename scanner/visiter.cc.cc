@@ -4,7 +4,7 @@
 #include "schema.h"
 #include "service.h"
 
-void CPPVisiter::PrintSchemaINC(Printer &printer, Schema* schema){
+void CCVisiter::PrintSchemaINC(Printer &printer, Schema* schema){
 	const std::vector<Field> & fieldList = schema->GetFieldList();
 
 	printer.PrintLine("enum {");
@@ -27,18 +27,18 @@ void CPPVisiter::PrintSchemaINC(Printer &printer, Schema* schema){
 	printer.Indent();
 
 	printer.PrintLine("%1();", schema->GetFullName());
-	printer.PrintLine("template<class WRITER>void Serialize(WRITER *w) const ;");
-	printer.PrintLine("template<class READER>bool Deserialize(READER *r);");
+	printer.PrintLine("void Serialize(PRPCBuffer *w) const ;");
+	printer.PrintLine("bool Deserialize(PRPCBuffer *r);");
 
 	
 	for (size_t i = 0; i < fieldList.size(); ++i){
-		printer.PrintLine("%1 %2;", fieldList[i].GetCPPType(), fieldList[i].GetName());
+		printer.PrintLine("%1 %2;", fieldList[i].GetCCType(), fieldList[i].GetName());
 	}
 	printer.Outdent();
 	printer.PrintLine("};");
 }
 
-void CPPVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
+void CCVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
 	//构造
 	const std::vector<Field> & fieldList = schema->GetFieldList();
 	printer.PrintLine("%1::%1()", schema->GetFullName());
@@ -46,17 +46,17 @@ void CPPVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
 	for (size_t i = 0; i < fieldList.size(); ++i){
 		if (fieldList[i].IsComplex())
 			continue;
-		printer.PrintLine("%1 %2(%3)", (commCheck ? "," : ":"), fieldList[i].GetName(), fieldList[i].GetCPPDefault());
+		printer.PrintLine("%1 %2(%3)", (commCheck ? "," : ":"), fieldList[i].GetName(), fieldList[i].GetCCDefault());
 		commCheck = true;
 	}
 	printer.PrintLine("{}");
 
 	//序列化
-	printer.PrintLine("template<class WRITER>void %1::Serialize(WRITER *w) const{", schema->GetFullName());
+	printer.PrintLine("void %1::Serialize(PRPCBuffer *w) const{", schema->GetFullName());
 	printer.Indent();
 
 	if (schema->GetSuper()){
-		printer.PrintLine("%1::Serialize<WRITER>(w);", schema->GetSuper()->GetFullName());
+		printer.PrintLine("%1::Serialize(w);", schema->GetSuper()->GetFullName());
 	}
 
 	//标记参数位
@@ -77,7 +77,7 @@ void CPPVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
 				printer.PrintLine("mask.WriteBit(!%1);", fieldList[i].GetName());
 			}
 			else{
-				printer.PrintLine("mask.WriteBit(%1!=%2);", fieldList[i].GetName(), fieldList[i].GetCPPDefault());
+				printer.PrintLine("mask.WriteBit(%1!=%2);", fieldList[i].GetName(), fieldList[i].GetCCDefault());
 			}
 		}
 		printer.PrintLine("w->WriteBytes(mask.Bytes(),MaskType::LENGTH);");
@@ -124,14 +124,14 @@ void CPPVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
 				printer.PrintLine("}");
 			}
 			else if (fieldList[i].IsString()){
-				printer.PrintLine("if(!%1.empty()){", fieldList[i].GetName(), fieldList[i].GetCPPDefault());
+				printer.PrintLine("if(!%1.empty()){", fieldList[i].GetName(), fieldList[i].GetCCDefault());
 				printer.Indent();
 				printer.PrintLine("w->Write(%1);", fieldList[i].GetName());
 				printer.Outdent();
 				printer.PrintLine("}");
 			}
 			else{
-				printer.PrintLine("if(%1!=%2){", fieldList[i].GetName(), fieldList[i].GetCPPDefault());
+				printer.PrintLine("if(%1!=%2){", fieldList[i].GetName(), fieldList[i].GetCCDefault());
 				printer.Indent();
 				printer.PrintLine("w->Write(%1);", fieldList[i].GetName());
 				printer.Outdent();
@@ -144,10 +144,10 @@ void CPPVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
 	printer.PrintLine("}");
 
 	//反序列化
-	printer.PrintLine("template<class READER>bool %1::Deserialize(READER *r) {", schema->GetFullName());
+	printer.PrintLine("bool %1::Deserialize(PRPCBuffer *r) {", schema->GetFullName());
 	printer.Indent();
 	if (schema->GetSuper()){
-		printer.PrintLine("if(!%1::Deserialize<READER>(r)){", schema->GetSuper()->GetFullName());
+		printer.PrintLine("if(!%1::Deserialize(r)){", schema->GetSuper()->GetFullName());
 		printer.Indent();
 		printer.PrintLine("return false;");
 		printer.Outdent();
@@ -192,7 +192,7 @@ void CPPVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
 					printer.PrintLine("return false;");
 					printer.Outdent();
 					printer.PrintLine("}");
-					printer.PrintLine("%1[i] = (%2)enumer;", fieldList[i].GetName(), fieldList[i].GetType()->GetName());
+					printer.PrintLine("%1[i] = (%2)enumer;", fieldList[i].GetName(), fieldList[i].GetCCType());
 				}
 				else {
 					printer.PrintLine("if(!r->Read(%1[i])){", fieldList[i].GetName());
@@ -226,7 +226,7 @@ void CPPVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
 				printer.PrintLine("return false;");
 				printer.Outdent();
 				printer.PrintLine("}");
-				printer.PrintLine("%1 = (%2)enumer;", fieldList[i].GetName(), fieldList[i].GetType()->GetName());
+				printer.PrintLine("%1 = (%2)enumer;", fieldList[i].GetName(), fieldList[i].GetCCType());
 				printer.Outdent();
 				printer.PrintLine("}");
 			}
@@ -255,24 +255,30 @@ void CPPVisiter::PrintSchemaSRC(Printer &printer, Schema* schema){
 	printer.PrintLine("}");
 }
 
-void CPPVisiter::Accept(Enumer* enumer){
+void CCVisiter::Accept(Enumer* enumer){
 	
 	{
 		std::stringstream ss;
 		Printer printer(ss);
-		printer.PrintLine("enum %1 {", enumer->GetName());
+		printer.PrintLine("struct %1 {", enumer->GetName());
 		printer.Indent();
 		const std::vector<std::string> & itemList = enumer->GetItemList();
+		printer.PrintLine("enum Type{");
+		printer.Indent();
 		for (size_t i = 0; i < itemList.size(); ++i){
 			printer.PrintLine("%1 = %2,", itemList[i], i);
 		}
 		printer.Outdent();
 		printer.PrintLine("};");
+		
+		printer.PrintLine("static const std::string& ToName(Type id);");
+		printer.PrintLine("static Type ToId(const std::string & name);");
 
-		printer.PrintLine("std::string ToName_%1(%1 id);", enumer->GetName());
-		printer.PrintLine("%1 ToId_%1(const std::string & name);", enumer->GetName());
-		
-		
+		printer.PrintLine("static const std::string NAMES[];");
+
+		printer.Outdent();
+		printer.PrintLine("};");
+
 		CodeFile code(outpath_ + package_, enumer->GetName(), "inc", ss.str());
 	}
 
@@ -281,7 +287,34 @@ void CPPVisiter::Accept(Enumer* enumer){
 		Printer printer(ss);
 		const std::vector<std::string> & itemList = enumer->GetItemList();
 
-		printer.PrintLine("static const char* NAME_%1[] = {", enumer->GetName());
+		printer.PrintLine("const std::string& %1::ToName(Type id){", enumer->GetName());
+		printer.Indent();
+		printer.PrintLine("static const std::string dummy(\"\");");
+		printer.PrintLine("if(id < 0 || id >= %1){", itemList.size());
+		printer.Indent();
+		printer.PrintLine("return dummy;");
+		printer.Outdent();
+		printer.PrintLine("}");
+		printer.PrintLine("return NAMES[id];", enumer->GetName());
+		printer.Outdent();
+		printer.PrintLine("}");
+
+		printer.PrintLine("%1::Type %1::ToId(const std::string & name){", enumer->GetName());
+		printer.Indent();
+		printer.PrintLine("for(size_t i=0; i<%1; ++i){", itemList.size());
+		printer.Indent();
+		printer.PrintLine("if(name==NAMES[i]){", enumer->GetName());
+		printer.Indent();
+		printer.PrintLine("return (Type)i;", enumer->GetName());
+		printer.Outdent();
+		printer.PrintLine("}");
+		printer.Outdent();
+		printer.PrintLine("}");
+		printer.PrintLine("return (Type)-1;", enumer->GetName());
+		printer.Outdent();
+		printer.PrintLine("}");
+
+		printer.PrintLine("const std::string %1::NAMES[] = {", enumer->GetName());
 		printer.Indent();
 		for (size_t i = 0; i < itemList.size(); ++i){
 			printer.PrintLine("\"%1\",", itemList[i]);
@@ -289,43 +322,20 @@ void CPPVisiter::Accept(Enumer* enumer){
 		printer.Outdent();
 		printer.PrintLine("};");
 
-		printer.PrintLine("std::string ToName_%1(%1 id){", enumer->GetName());
-		printer.Indent();
-		printer.PrintLine("if(id < 0 || id >= %1){", itemList.size());
-		printer.Indent();
-		printer.PrintLine("return \"\";");
-		printer.Outdent();
-		printer.PrintLine("}");
-		printer.PrintLine("return NAME_%1[id];", enumer->GetName());
-		printer.Outdent();
-		printer.PrintLine("}");
-
-		printer.PrintLine("%1 ToId_%1(const std::string & name){", enumer->GetName());
-		printer.Indent();
-		printer.PrintLine("for(size_t i=0; i<%1; ++i){", itemList.size());
-		printer.Indent();
-		printer.PrintLine("if(name==NAME_%1[i]){", enumer->GetName());
-		printer.Indent();
-		printer.PrintLine("return (%1)i;", enumer->GetName());
-		printer.Outdent();
-		printer.PrintLine("}");
-		printer.Outdent();
-		printer.PrintLine("}");
-		printer.PrintLine("return (%1)-1;", enumer->GetName());
-		printer.Outdent();
-		printer.PrintLine("}");
-
 		CodeFile code(outpath_ + package_, enumer->GetName(), "src", ss.str());
 	}
 	{
 		Printer printer(incCode_);
 		printer.PrintLine("#include \"%1.inc\"",enumer->GetName());
+	}
+	{
+		Printer printer(srcCode_);
 		printer.PrintLine("#include \"%1.src\"", enumer->GetName());
 	}
 
 }
 
-void CPPVisiter::Accept(Schema* schema){
+void CCVisiter::Accept(Schema* schema){
 	{
 		std::stringstream ss;
 		Printer printer(ss);
@@ -347,11 +357,14 @@ void CPPVisiter::Accept(Schema* schema){
 	{
 		Printer printer(incCode_);
 		printer.PrintLine("#include \"%1.inc\"", schema->GetName());
+	}
+	{
+		Printer printer(srcCode_);
 		printer.PrintLine("#include \"%1.src\"", schema->GetName());
 	}
 }
 
-void CPPVisiter::Accept(Service* service){
+void CCVisiter::Accept(Service* service){
 	{
 		std::stringstream ss;
 		Printer printer(ss);
@@ -366,7 +379,7 @@ void CPPVisiter::Accept(Service* service){
 
 		//生成发送端 S
 
-		printer.PrintLine("template<class WRITER>class %1Stub {", service->GetName());
+		printer.PrintLine("class %1Stub {", service->GetName());
 		printer.PrintLine("public:");
 		printer.Indent();
 		
@@ -374,32 +387,46 @@ void CPPVisiter::Accept(Service* service){
 			printer.Print("void %1(",schemaList[i]->GetName());
 			const std::vector<Field>&fieldList = schemaList[i]->GetFieldList();
 			for (size_t j = 0; j < fieldList.size(); ++j){
-				printer.Append("%1 %2%3%4 ", fieldList[j].GetCPPType(), (fieldList[j].IsComplex() ? "&" : ""), fieldList[j].GetName(), ((j + 1) != fieldList.size() ? "," : ""));
+				printer.Append("%1 %2%3%4 ", fieldList[j].GetCCType(), (fieldList[j].IsComplex() ? "&" : ""), fieldList[j].GetName(), ((j + 1) != fieldList.size() ? "," : ""));
 			}
 			printer.Append("); // %1\n",i);
 		}
 
-		printer.PrintLine("virtual WRITER* MethodBegin() = 0;");
+		printer.PrintLine("virtual PRPCBuffer* MethodBegin() = 0;");
 		printer.PrintLine("virtual void MethodEnd() = 0;");
 
 		printer.Outdent();
 		printer.PrintLine("};");
 
-	
+		printer.PrintLine("class %1Proxy {", service->GetName());
+		printer.PrintLine("public:");
+		printer.Indent();
+		for (size_t i = 0; i < schemaList.size(); ++i){
+			printer.Print("virtual bool %1(", schemaList[i]->GetName());
+			const std::vector<Field>&fieldList = schemaList[i]->GetFieldList();
+			for (size_t j = 0; j < fieldList.size(); ++j){
+				printer.Append("%1 %2%3%4 ", fieldList[j].GetCCType(), (fieldList[j].IsComplex() ? "&" : ""), fieldList[j].GetName(), ((j + 1) != fieldList.size() ? "," : ""));
+			}
+			printer.Append(") = 0; // %1\n", i);
+		}
+		printer.Outdent();
+		printer.PrintLine("};");
 
 		//生成解包处理
-		printer.PrintLine("template<class READER,class PROXY>class %1Dispatcher {", service->GetName());
+		printer.PrintLine("class %1Dispatcher {", service->GetName());
 		printer.PrintLine("public:");
 		printer.Indent();
 
 		for (size_t i = 0; i < schemaList.size(); ++i){
-			printer.PrintLine("static bool %1(READER *r, PROXY *p); // %2", schemaList[i]->GetName(), i);
+			printer.PrintLine("static bool %1(PRPCBuffer *r, %3Proxy *p); // %2", schemaList[i]->GetName(), i, service->GetName());
 		}
 
-		printer.PrintLine("static bool Execute(READER *r, PROXY *p);");
+		printer.PrintLine("static bool Execute(PRPCBuffer *r, %1Proxy *p);", service->GetName());
 
 		printer.Outdent();
 		printer.PrintLine("};");
+
+	
 
 		CodeFile code(outpath_ + package_, service->GetName(), "inc", ss.str());
 		
@@ -414,7 +441,7 @@ void CPPVisiter::Accept(Service* service){
 			printer.Print("bool %1(", schemaList[i]->GetName());
 			const std::vector<Field>&fieldList = schemaList[i]->GetFieldList();
 			for (size_t j = 0; j < fieldList.size(); ++j){
-				printer.Append("%1 %2%3%4 ", fieldList[j].GetCPPType(), (fieldList[j].IsComplex() ? "&" : ""), fieldList[j].GetName(), ((j + 1) != fieldList.size() ? "," : ""));
+				printer.Append("%1 %2%3%4 ", fieldList[j].GetCCType(), (fieldList[j].IsComplex() ? "&" : ""), fieldList[j].GetName(), ((j + 1) != fieldList.size() ? "," : ""));
 			}
 			printer.Append("); // %1\n", i);
 		}
@@ -435,14 +462,14 @@ void CPPVisiter::Accept(Service* service){
 
 		//发送端函数实现
 		for (size_t i = 0; i < schemaList.size(); ++i){
-			printer.Print("template<class WRITER>void %1Stub<WRITER>::%2(", service->GetName(), schemaList[i]->GetName());
+			printer.Print("void %1Stub::%2(", service->GetName(), schemaList[i]->GetName());
 			const std::vector<Field>&fieldList = schemaList[i]->GetFieldList();
 			for (size_t j = 0; j < fieldList.size(); ++j){
-				printer.Append("%1 %2%3%4 ", fieldList[j].GetCPPType(), (fieldList[j].IsComplex() ? "&" : ""), fieldList[j].GetName(), ((j + 1) != fieldList.size() ? "," : ""));
+				printer.Append("%1 %2%3%4 ", fieldList[j].GetCCType(), (fieldList[j].IsComplex() ? "&" : ""), fieldList[j].GetName(), ((j + 1) != fieldList.size() ? "," : ""));
 			}
 			printer.Append("){\n", i);
 			printer.Indent();
-			printer.PrintLine("WRITER *w = MethodBegin();");
+			printer.PrintLine("PRPCBuffer *w = MethodBegin();");
 			printer.PrintLine("if(!w){");
 			printer.Indent();
 			printer.PrintLine("return;");
@@ -454,7 +481,7 @@ void CPPVisiter::Accept(Service* service){
 				for (size_t j = 0; j < fieldList.size(); ++j){
 					printer.PrintLine("_%1.%2 = %2;", i, fieldList[j].GetName());
 				}
-				printer.PrintLine("_%1.Serialize<WRITER>(w);", i);
+				printer.PrintLine("_%1.Serialize(w);", i);
 			}
 			printer.PrintLine("MethodEnd();");
 			printer.Outdent();
@@ -464,7 +491,7 @@ void CPPVisiter::Accept(Service* service){
 
 		//解析端函数实现
 		for (size_t i = 0; i < schemaList.size(); ++i){
-			printer.PrintLine("template<class READER,class PROXY>bool %1Dispatcher<READER,PROXY>::%2(READER *r, PROXY *p){", service->GetName(), schemaList[i]->GetName());
+			printer.PrintLine("bool %1Dispatcher::%2(PRPCBuffer *r, %1Proxy *p){", service->GetName(), schemaList[i]->GetName());
 			const std::vector<Field>&fieldList = schemaList[i]->GetFieldList();
 			printer.Indent();
 			printer.PrintLine("if(!r){");
@@ -479,7 +506,7 @@ void CPPVisiter::Accept(Service* service){
 			printer.PrintLine("}");
 			if (!fieldList.empty()){
 				printer.PrintLine("%1 _%2;", schemaList[i]->GetFullName(), i);
-				printer.PrintLine("if(!_%1.Deserialize<READER>(r)){", i);
+				printer.PrintLine("if(!_%1.Deserialize(r)){", i);
 				printer.Indent();
 				printer.PrintLine("return false;");
 				printer.Outdent();
@@ -498,7 +525,7 @@ void CPPVisiter::Accept(Service* service){
 
 		}
 
-		printer.PrintLine("template<class READER,class PROXY>bool %1Dispatcher<READER,PROXY>::Execute(READER *r, PROXY *p){", service->GetName());
+		printer.PrintLine("bool %1Dispatcher::Execute(PRPCBuffer *r, %1Proxy *p){", service->GetName());
 		if (!schemaList.empty()){
 			printer.Indent();
 			printer.PrintLine("if(!r){");
@@ -522,7 +549,7 @@ void CPPVisiter::Accept(Service* service){
 			for (size_t i = 0; i < schemaList.size(); ++i){
 				printer.PrintLine("case %1 :", i);
 				printer.Indent();
-				printer.PrintLine("return %1Dispatcher<READER,PROXY>::%2(r,p);", service->GetName(), schemaList[i]->GetName());
+				printer.PrintLine("return %1Dispatcher::%2(r,p);", service->GetName(), schemaList[i]->GetName());
 				printer.Outdent();
 			}
 			printer.PrintLine("default:");
@@ -546,11 +573,16 @@ void CPPVisiter::Accept(Service* service){
 	{
 		Printer printer(incCode_);
 		printer.PrintLine("#include \"%1.inc\"", service->GetName());
+	}
+	{
+		Printer printer(srcCode_);
 		printer.PrintLine("#include \"%1.src\"", service->GetName());
 	}
+	
+	
 }
 
-void CPPVisiter::Begin(){
+void CCVisiter::Begin(){
 	{
 		Printer printer(incCode_);
 		printer.PrintLine("#ifndef ____PRPC_GEN_H___");
@@ -559,15 +591,30 @@ void CPPVisiter::Begin(){
 		if (!package_.empty())
 			printer.PrintLine("namespace %1{", package_);
 	}
+
+	{
+		Printer printer(srcCode_);
+		printer.PrintLine("#include \"prpc.h\"");
+		printer.PrintLine("#include \"prpc.gen.h\"");
+		if (!package_.empty())
+			printer.PrintLine("namespace %1{", package_);
+	}
 }
 
-void CPPVisiter::End(){
+void CCVisiter::End(){
 	{
 		Printer printer(incCode_);
 		if (!package_.empty())
 			printer.PrintLine("}");
 		printer.PrintLine("#endif //____PRPC_GEN_H___");
 
-		CodeFile code(outpath_, "prpc.gen", "hpp", incCode_.str());
+		CodeFile code(outpath_, "prpc.gen", "h", incCode_.str());
+	}
+
+	{
+		Printer printer(srcCode_);
+		if (!package_.empty())
+			printer.PrintLine("}");
+		CodeFile code(outpath_, "prpc.gen", "cc", srcCode_.str());
 	}
 }

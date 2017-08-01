@@ -8,7 +8,7 @@
 
 #include "config.h"
 #include "scanner.h"
-#include "prpc.tab.hpp"
+#include "prpc.tab.hh"
 
 struct FileStackNode
 {

@@ -117,9 +117,9 @@ protected:
 
 //////////////////////////////////////////////////////////////////////////
 
-class CPPVisiter : public CodeVisiter{
+class CCVisiter : public CodeVisiter{
 public:
-	CPPVisiter(const std::string & package, const std::string& outpath){
+	CCVisiter(const std::string & package, const std::string& outpath){
 		package_ = package;
 		outpath_ = outpath;
 	}
@@ -137,6 +137,7 @@ private:
 
 private:
 	std::stringstream incCode_;
+	std::stringstream srcCode_;
 };
 
 //////////////////////////////////////////////////////////////////////////

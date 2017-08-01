@@ -47,8 +47,8 @@ public:
 	int GetMaxLength()const{
 		return maxLength_;
 	}
-	std::string GetCPPType() const ;
-	std::string GetCPPDefault()const ;
+	std::string GetCCType() const ;
+	std::string GetCCDefault()const ;
 	std::string GetCSType(bool needArrayFlag = true) const;
 	std::string GetCSDefault()const;
 	std::string GetGOType() const;

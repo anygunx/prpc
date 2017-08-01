@@ -70,7 +70,7 @@ void Scanner::AddSourcePath(const std::string& pathname){
 
 CodeVisiter* Scanner::CreateCodeVisiter(const std::string &name){
 	if (name == "cc"){
-		return new CPPVisiter(package_, outputPath_);
+		return new CCVisiter(package_, outputPath_);
 	}
 	else if (name == "cs"){
 		return new CSVisiter(package_, outputPath_);

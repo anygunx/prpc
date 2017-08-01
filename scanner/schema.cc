@@ -2,7 +2,7 @@
 #include "schema.h"
 #include "visiter.h"
 
-std::string Field::GetCPPType()const {
+std::string Field::GetCCType()const {
 	std::string typeName;
 	if (maxLength_)
 		typeName = "std::vector<";
@@ -45,8 +45,11 @@ std::string Field::GetCPPType()const {
 		typeName += "std::string";
 		break;
 	case NT_Schema:
+		typeName += type_->GetName();
+		break;
 	case NT_Enumer:
 		typeName += type_->GetName();
+		typeName += "::Type";
 		break;
 	default:
 		throw "Invalid field type.";
@@ -170,7 +173,7 @@ std::string Field::GetGOType()const {
 	return typeName;
 }
 
-std::string Field::GetCPPDefault()const{
+std::string Field::GetCCDefault()const{
 
 	if (IsComplex())
 		return "";
@@ -194,7 +197,7 @@ std::string Field::GetCPPDefault()const{
 		ret = "false";
 		break;
 	case NT_Enumer:
-		ret = "(" + type_->GetName() + ")(0)";
+		ret = "(" + type_->GetName() + "::Type)(-1)";
 		break;
 	default:
 		throw "Invalid field type.";

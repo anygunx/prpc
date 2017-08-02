@@ -279,7 +279,7 @@ void CCVisiter::Accept(Enumer* enumer){
 		printer.Outdent();
 		printer.PrintLine("};");
 
-		CodeFile code(outpath_ + package_, enumer->GetName(), "inc", ss.str());
+		CodeFile code(outpath_ + package_, enumer->GetName(), "h.inl", ss.str());
 	}
 
 	{
@@ -322,15 +322,15 @@ void CCVisiter::Accept(Enumer* enumer){
 		printer.Outdent();
 		printer.PrintLine("};");
 
-		CodeFile code(outpath_ + package_, enumer->GetName(), "src", ss.str());
+		CodeFile code(outpath_ + package_, enumer->GetName(), "c.inl", ss.str());
 	}
 	{
 		Printer printer(incCode_);
-		printer.PrintLine("#include \"%1.inc\"",enumer->GetName());
+		printer.PrintLine("#include \"%1.h.inl\"",enumer->GetName());
 	}
 	{
 		Printer printer(srcCode_);
-		printer.PrintLine("#include \"%1.src\"", enumer->GetName());
+		printer.PrintLine("#include \"%1.c.inl\"", enumer->GetName());
 	}
 
 }
@@ -342,7 +342,7 @@ void CCVisiter::Accept(Schema* schema){
 		
 		PrintSchemaINC(printer,schema);
 
-		CodeFile code(outpath_ + package_, schema->GetName(), "inc", ss.str());
+		CodeFile code(outpath_ + package_, schema->GetName(), "h.inl", ss.str());
 	}
 
 	{
@@ -351,16 +351,16 @@ void CCVisiter::Accept(Schema* schema){
 		
 		PrintSchemaSRC(printer, schema);
 
-		CodeFile code(outpath_ + package_, schema->GetName(), "src", ss.str());
+		CodeFile code(outpath_ + package_, schema->GetName(), "c.inl", ss.str());
 	}
 
 	{
 		Printer printer(incCode_);
-		printer.PrintLine("#include \"%1.inc\"", schema->GetName());
+		printer.PrintLine("#include \"%1.h.inl\"", schema->GetName());
 	}
 	{
 		Printer printer(srcCode_);
-		printer.PrintLine("#include \"%1.src\"", schema->GetName());
+		printer.PrintLine("#include \"%1.c.inl\"", schema->GetName());
 	}
 }
 
@@ -428,7 +428,7 @@ void CCVisiter::Accept(Service* service){
 
 	
 
-		CodeFile code(outpath_ + package_, service->GetName(), "inc", ss.str());
+		CodeFile code(outpath_ + package_, service->GetName(), "h.inl", ss.str());
 		
 
 	}
@@ -446,7 +446,7 @@ void CCVisiter::Accept(Service* service){
 			printer.Append("); // %1\n", i);
 		}
 
-		CodeFile code(outpath_ + package_, service->GetName(), "fun", ss.str());
+		CodeFile code(outpath_ + package_, service->GetName(), "f.inl", ss.str());
 	}
 
 	{
@@ -566,17 +566,17 @@ void CCVisiter::Accept(Service* service){
 		printer.Outdent();
 		printer.PrintLine("}");
 
-		CodeFile code(outpath_ + package_, service->GetName(), "src", ss.str());
+		CodeFile code(outpath_ + package_, service->GetName(), "c.inl", ss.str());
 
 	}
 
 	{
 		Printer printer(incCode_);
-		printer.PrintLine("#include \"%1.inc\"", service->GetName());
+		printer.PrintLine("#include \"%1.h.inl\"", service->GetName());
 	}
 	{
 		Printer printer(srcCode_);
-		printer.PrintLine("#include \"%1.src\"", service->GetName());
+		printer.PrintLine("#include \"%1.c.inl\"", service->GetName());
 	}
 	
 	

@@ -39,7 +39,7 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 				printer.PrintLine("mask.WriteBit(true); // %1", fieldList[i].GetName());
 			}
 			else if (fieldList[i].IsBoolean()){
-				printer.PrintLine("mask.WriteBit(!%1);", fieldList[i].GetName());
+				printer.PrintLine("mask.WriteBit(%1);", fieldList[i].GetName());
 			}
 			else{
 				printer.PrintLine("mask.WriteBit(%1!=%2);", fieldList[i].GetName(), fieldList[i].GetCSDefault());

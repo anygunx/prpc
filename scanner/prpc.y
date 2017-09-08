@@ -359,5 +359,5 @@ int yywrap (void)
 
 void yyerror (const char *msg)
 {
-	std::cerr << "YACC ERROR | FILE[" << CurrentFilename << "] LINE(" << CurrentLineno << ") | " << msg;
+	std::cout << "YACC ERROR | FILE[" << CurrentFilename << "] LINE(" << CurrentLineno << ") | " << msg;
 }

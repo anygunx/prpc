@@ -209,7 +209,7 @@ std::string Field::GetCCDefault()const{
 std::string Field::GetCSDefault()const{
 
 	if (IsComplex())
-		return "";
+		return "null";
 	std::string ret;
 
 	switch (type_->GetType())

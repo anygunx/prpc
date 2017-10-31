@@ -232,7 +232,10 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 
 	printer.PrintLine("");
 
-	printer.PrintLine("public virtual void Release(){");
+	if (schema->GetSuper())
+		printer.PrintLine("public override void Release(){");
+	else
+		printer.PrintLine("public virtual void Release(){");
 	printer.Indent();
 	if (schema->GetSuper()){
 		printer.PrintLine("base.Release();");
@@ -243,27 +246,27 @@ void CSVisiter::PrintSchema(Printer &printer, Schema* schema, bool needPublic){
 	printer.Outdent();
 	printer.PrintLine("}");
 
-	printer.PrintLine("public virtual void Copy(ref %1 from){", schema->GetFullName());
+	/*printer.PrintLine("public virtual void Copy(%1 from){", schema->GetFullName());
 	printer.Indent();
 	if (schema->GetSuper()){
-		printer.PrintLine("base.Copy(ref from);");
+	printer.PrintLine("base.Copy(from);");
 	}
 	for (size_t i = 0; i < fieldList.size(); ++i){
-		printer.PrintLine("this.%1 = from.%1;", fieldList[i].GetName());
+	printer.PrintLine("this.%1 = from.%1;", fieldList[i].GetName());
 	}
 	printer.Outdent();
 	printer.PrintLine("}");
 
-	printer.PrintLine("public virtual void Clone(ref %1 to){", schema->GetFullName());
+	printer.PrintLine("public virtual void Clone(%1 to){", schema->GetFullName());
 	printer.Indent();
 	if (schema->GetSuper()){
-		printer.PrintLine("base.Clone(ref to);");
+	printer.PrintLine("base.Clone(to);");
 	}
 	for (size_t i = 0; i < fieldList.size(); ++i){
-		printer.PrintLine("to.%1 = this.%1;", fieldList[i].GetName());
+	printer.PrintLine("to.%1 = this.%1;", fieldList[i].GetName());
 	}
 	printer.Outdent();
-	printer.PrintLine("}");
+	printer.PrintLine("}");*/
 
 	for (size_t i = 0; i < fieldList.size(); ++i){
 		printer.PrintLine("public %1 %2;", fieldList[i].GetCSType(), fieldList[i].GetName());

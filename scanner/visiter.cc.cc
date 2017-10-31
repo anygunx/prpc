@@ -578,8 +578,6 @@ void CCVisiter::Accept(Service* service){
 		Printer printer(srcCode_);
 		printer.PrintLine("#include \"%1.c.inl\"", service->GetName());
 	}
-	
-	
 }
 
 void CCVisiter::Begin(){

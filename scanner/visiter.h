@@ -167,12 +167,13 @@ public:
 			package_ = "prpc";
 	}
 	
+	void Begin();
 	void Accept(Enumer* enumer);
 	void Accept(Schema* schema);
 	void Accept(Service* service);
 private:
-	void PrintSchemaDef(Printer &printer, Schema* schema);
-	void PrintSchemaFun(Printer &printer, Schema* schema);
+	void PrintSchemaDef(Printer &printer, Schema* schema, bool needSync = true);
+	void PrintSchemaFun(Printer &printer, Schema* schema, bool needSync = true);
 };
 
 #endif// __CodeFile_h__
